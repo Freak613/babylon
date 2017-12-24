@@ -1,5 +1,4 @@
-import test from "ava";
-import { multiple as getFixtures } from "babel-helper-fixtures";
+import { multiple as getFixtures } from "@babel/helper-fixtures";
 
 export function runFixtureTests(fixturesPath, parseFunction) {
   const fixtures = getFixtures(fixturesPath);
@@ -7,18 +6,15 @@ export function runFixtureTests(fixturesPath, parseFunction) {
   Object.keys(fixtures).forEach(function(name) {
     fixtures[name].forEach(function(testSuite) {
       testSuite.tests.forEach(function(task) {
-        const testFn = task.disabled
-          ? test.skip
-          : task.options.only ? test.only : test;
+        const testFn = task.disabled ? it.skip : it;
 
-        testFn(name + "/" + testSuite.title + "/" + task.title, function(t) {
+        testFn(name + "/" + testSuite.title + "/" + task.title, function() {
           try {
             runTest(task, parseFunction);
-            t.pass();
           } catch (err) {
             const message =
               name + "/" + task.actual.filename + ": " + err.message;
-            t.fail(message);
+            throw new Error(message);
           }
         });
       });
@@ -37,18 +33,15 @@ export function runThrowTestsWithEstree(fixturesPath, parseFunction) {
         task.options.plugins = task.options.plugins || [];
         task.options.plugins.push("estree");
 
-        const testFn = task.disabled
-          ? test.skip
-          : task.options.only ? test.only : test;
+        const testFn = task.disabled ? it.skip : it;
 
-        testFn(name + "/" + testSuite.title + "/" + task.title, function(t) {
+        testFn(name + "/" + testSuite.title + "/" + task.title, function() {
           try {
             runTest(task, parseFunction);
-            t.pass();
           } catch (err) {
             const message =
               name + "/" + task.actual.filename + ": " + err.message;
-            t.fail(message);
+            throw new Error(message);
           }
         });
       });
@@ -133,15 +126,17 @@ function misMatch(exp, act) {
     if (left !== right) return left + " !== " + right;
   } else if (Array.isArray(exp)) {
     if (!Array.isArray(act)) return ppJSON(exp) + " != " + ppJSON(act);
-    if (act.length != exp.length)
+    if (act.length != exp.length) {
       return "array length mismatch " + exp.length + " != " + act.length;
+    }
     for (let i = 0; i < act.length; ++i) {
       const mis = misMatch(exp[i], act[i]);
       if (mis) return addPath(mis, i);
     }
   } else if (!exp || !act || typeof exp != "object" || typeof act != "object") {
-    if (exp !== act && typeof exp != "function")
+    if (exp !== act && typeof exp != "function") {
       return ppJSON(exp) + " !== " + ppJSON(act);
+    }
   } else {
     for (const prop in exp) {
       const mis = misMatch(exp[prop], act[prop]);

@@ -151,9 +151,9 @@ export default (superClass: Class<Parser>): Class<Parser> =>
     }
 
     /**
-   * If !expectSuccess, returns undefined instead of failing to parse.
-   * If expectSuccess, parseElement should always return a defined value.
-   */
+     * If !expectSuccess, returns undefined instead of failing to parse.
+     * If expectSuccess, parseElement should always return a defined value.
+     */
     tsParseDelimitedListWorker<T: N.Node>(
       kind: ParsingContext,
       parseElement: () => ?T,
@@ -1009,10 +1009,12 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       node.end = original.end;
       node.loc.end = original.loc.end;
 
-      if (original.leadingComments)
+      if (original.leadingComments) {
         node.leadingComments = original.leadingComments;
-      if (original.trailingComments)
+      }
+      if (original.trailingComments) {
         node.trailingComments = original.trailingComments;
+      }
       if (original.innerComments) node.innerComments = original.innerComments;
 
       return node;
@@ -1278,7 +1280,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       noCalls: ?boolean,
       state: { stop: boolean },
     ): N.Expression {
-      if (this.eat(tt.bang)) {
+      if (!this.hasPrecedingLineBreak() && this.eat(tt.bang)) {
         const nonNullExpression: N.TsNonNullExpression = this.startNodeAt(
           startPos,
           startLoc,
@@ -1422,6 +1424,20 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       } else {
         return super.parseExport(node);
       }
+    }
+
+    parseExportDefaultExpression(): N.Expression | N.Declaration {
+      if (
+        this.isContextual("abstract") &&
+        this.lookahead().type === tt._class
+      ) {
+        const cls = this.startNode();
+        this.next(); // Skip "abstract"
+        this.parseClass(cls, true, true);
+        cls.abstract = true;
+        return cls;
+      }
+      return super.parseExportDefaultExpression();
     }
 
     parseStatementContent(

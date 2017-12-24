@@ -7,5 +7,28 @@ export default {
     file: "lib/index.js",
     format: "cjs",
   },
-  plugins: [babel(), nodeResolve()],
+  plugins: [
+    babel({
+      externalHelpersWhitelist: ["inheritsLoose"],
+      babelrc: false,
+      presets: [
+        [
+          "@babel/env",
+          {
+            loose: true,
+            modules: false,
+            targets: {
+              node: "4.2",
+            },
+          },
+        ],
+        "@babel/flow",
+      ],
+      plugins: [
+        "transform-charcodes",
+        ["@babel/transform-for-of", { assumeArray: true }],
+      ],
+    }),
+    nodeResolve(),
+  ],
 };
